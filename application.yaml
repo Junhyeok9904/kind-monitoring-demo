@@ -1,27 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: Application # リソースの種類を Application として定義 (Argo CD の Application リソース)
 metadata:
-  name: kube-prometheus-stack # Argo CD Application 이름 (원하는 대로 변경 가능)
-  namespace: argocd # Argo CD가 설치된 네임스페이스 (일반적으로 argocd)
-spec:
-  project: default # Argo CD 프로젝트 (기본적으로 default)
-  source:
-    repoURL: https://github.com/prometheus-community/helm-charts # 헬름 차트 저장소 URL
-    path: charts/kube-prometheus-stack # 헬름 차트 경로
-    targetRevision: main # 브랜치 또는 태그 (여기서는 main 브랜치 사용)
-    helm:
-      valuesObject: # values.yaml 설정을 여기에 넣거나 ConfigMap/Secret 참조 가능
-        grafana:
-          adminPassword: "city4579" # Grafana 관리자 비밀번호 설정 (필수 변경!)
-        prometheus:
-          thanos:
-            create: false # Thanos 사용 안 함 (필요시 true 로 변경)
-  destination:
-    server: https://kubernetes.default.svc # 쿠버네티스 API 서버 주소 (대부분의 경우 변경 불필요)
-    namespace: monitoring # 배포될 네임스페이스 (원하는 네임스페이스로 변경 가능)
-  syncPolicy:
-    automated: # 자동 동기화 활성화
-      prune: true # 삭제된 리소스 정리 활성화
-      selfHeal: true # 드리프트 감지 시 자동 복구 활성화
-    syncOptions:
-      - CreateNamespace=true # 네임스페이스가 없으면 자동으로 생성
+  name: kube-prometheus-stack # Argo CD Applicationの名前 (任意の名前に変更可能 -  識別しやすい名前を設定)
+  namespace: argocd # Argo CDがインストールされているNamespace (通常は argocd -  Application を Argo CD が管理する namespace)
+spec: # Application の仕様を定義するセクション
+  project: default # Argo CD Project (デフォルトでは default プロジェクト -  Application が属する Argo CD プロジェクト)
+  source: # デプロイするリソースのソースを定義するセクション
+    repoURL: https://github.com/prometheus-community/helm-charts # Helm ChartリポジトリのURL (kube-prometheus-stack Helm Chart がホストされているリポジトリ)
+    path: charts/kube-prometheus-stack # Helm Chartのパス (リポジトリ内の Helm Chart のディレクトリパス)
+    targetRevision: main # ブランチ、タグ、またはコミット SHA (ここでは main ブランチの最新バージョンを使用)
+  destination: # デプロイ先クラスタと Namespace を定義するセクション
+    server: https://kubernetes.default.svc # Kubernetes APIサーバーのアドレス (通常は変更不要 -  Argo CD が動作しているクラスタ内へのデプロイ)
+    namespace: monitoring # デプロイ先のNamespace (monitoring Namespace に kube-prometheus-stack をデプロイ -  任意の名前に変更可能)
+  syncPolicy: # 同期ポリシーを定義するセクション
+    automated: # 自動同期に関する設定
+      prune: true # Git リポジトリから削除された Kubernetes リソースを自動的に削除 (不要になったリソースを自動削除)
+      selfHeal: true # クラスタの状態が Git リポジトリの状態と異なる場合に自動的に修復 (意図しない変更を自動的に元に戻す)
+    syncOptions: # 同期オプション (追加設定)
+      - CreateNamespace=true # デプロイ先の Namespace が存在しない場合に自動的に作成 (namespace: monitoring が存在しない場合に自動作成)
+      - ServerSideApply=true # Kubernetes の Server-Side Apply 機能を使用 (大規模な設定や競合をより安全に処理)
