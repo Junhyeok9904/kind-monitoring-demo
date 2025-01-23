@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack # Argo CD Application 이름 (원하는 대로 변경 가능)
+  namespace: argocd # Argo CD가 설치된 네임스페이스 (일반적으로 argocd)
+spec:
+  project: default # Argo CD 프로젝트 (기본적으로 default)
+  source:
+    repoURL: https://github.com/prometheus-community/helm-charts # 헬름 차트 저장소 URL
+    path: charts/kube-prometheus-stack # 헬름 차트 경로
+    targetRevision: main # 브랜치 또는 태그 (여기서는 main 브랜치 사용)
+    helm:
+      valuesObject: # values.yaml 설정을 여기에 넣거나 ConfigMap/Secret 참조 가능
+        grafana:
+          adminPassword: "city4579" # Grafana 관리자 비밀번호 설정 (필수 변경!)
+        prometheus:
+          thanos:
+            create: false # Thanos 사용 안 함 (필요시 true 로 변경)
+  destination:
+    server: https://kubernetes.default.svc # 쿠버네티스 API 서버 주소 (대부분의 경우 변경 불필요)
+    namespace: monitoring # 배포될 네임스페이스 (원하는 네임스페이스로 변경 가능)
+  syncPolicy:
+    automated: # 자동 동기화 활성화
+      prune: true # 삭제된 리소스 정리 활성화
+      selfHeal: true # 드리프트 감지 시 자동 복구 활성화
+    syncOptions:
+      - CreateNamespace=true # 네임스페이스가 없으면 자동으로 생성
